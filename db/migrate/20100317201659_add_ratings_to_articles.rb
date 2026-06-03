@@ -1,11 +1,14 @@
-class AddRatingsToArticles < ActiveRecord::Migration
-  require 'acts_as_rated'
-  
+class AddRatingsToArticles < ActiveRecord::Migration[4.2]
   def self.up
-    ActiveRecord::Base.create_ratings_table :with_rater => false
+    create_table :ratings do |t|
+      t.integer :rated_id
+      t.string  :rated_type
+      t.decimal :rating
+    end
+    add_index :ratings, [:rated_type, :rated_id]
   end
 
   def self.down
-    ActiveRecord::Base.drop_ratings_table
+    drop_table :ratings
   end
 end

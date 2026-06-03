@@ -1,5 +1,4 @@
 class CategoriesController < KnowledgebaseController
-	unloadable
 
   def show
     @category = KbCategory.find(params[:id])

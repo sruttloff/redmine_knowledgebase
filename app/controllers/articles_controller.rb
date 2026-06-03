@@ -1,10 +1,9 @@
 class ArticlesController < KnowledgebaseController
-  unloadable
   
   helper :attachments
   include AttachmentsHelper
 
-  before_filter :get_article, :only => [:add_attachment, :show, :edit, :update, :add_comment, :destroy, :destroy_comment]
+  before_action :get_article, :only => [:add_attachment, :show, :edit, :update, :add_comment, :destroy, :destroy_comment]
   
   def new
     @article = KbArticle.new

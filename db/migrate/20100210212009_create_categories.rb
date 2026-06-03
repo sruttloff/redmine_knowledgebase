@@ -1,4 +1,4 @@
-class CreateCategories < ActiveRecord::Migration
+class CreateCategories < ActiveRecord::Migration[4.2]
   def self.up
     create_table :kb_categories do |t|
       t.column :title, :string, :null => false

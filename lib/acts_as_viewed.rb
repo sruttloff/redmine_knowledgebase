@@ -92,7 +92,7 @@ module ActiveRecord #:nodoc:
             Object.class_eval <<-EOV
               class #{viewing_class} < ActiveRecord::Base
                 belongs_to :viewed, :polymorphic => true
-                belongs_to :viewer, :class_name => #{viewer_class}, :foreign_key => :viewer_id
+                belongs_to :viewer, :class_name => '#{viewer_class}', :foreign_key => :viewer_id
               end
             EOV
           end
@@ -118,7 +118,7 @@ module ActiveRecord #:nodoc:
           viewer_as_class = viewer_class.constantize
           return if viewer_as_class.instance_methods.include?('find_in_viewings')
           viewer_as_class.class_eval <<-EOS
-            has_many :viewings, :foreign_key => :viewer_id, :class_name => #{viewing_class.to_s}
+            has_many :viewings, :foreign_key => :viewer_id, :class_name => '#{viewing_class.to_s}'
           EOS
         end
       end

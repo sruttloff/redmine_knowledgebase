@@ -1,5 +1,4 @@
-class KbArticle < ActiveRecord::Base
-  unloadable
+class KbArticle < ApplicationRecord
 
   self.table_name = "kb_articles"
 
@@ -16,11 +15,18 @@ class KbArticle < ActiveRecord::Base
   acts_as_taggable
   acts_as_attachable
 
+  scope :visible, lambda { |*args|
+    user = args.first || User.current
+    if Setting['plugin_redmine_knowledgebase']['knowledgebase_anonymous_access'].to_i == 1 ||
+       user.allowed_to?(:view_articles, nil, :global => true)
+      where(nil)
+    else
+      none
+    end
+  }
+
   acts_as_searchable :columns => [ "kb_articles.title", "kb_articles.content"],
-                     :include => [ :project ],
-                     :order_column => "kb_articles.id",
-                     :date_column => "kb_articles.created_at",
-                     :permission => nil
+                     :date_column => "kb_articles.created_at"
 
   acts_as_event :title => Proc.new { |o| "#{l(:label_title_articles)} ##{o.id}: #{o.title}" },
                 :description => Proc.new { |o| "#{o.content}" },
@@ -28,7 +34,7 @@ class KbArticle < ActiveRecord::Base
                 :type => 'articles',
                 :url => Proc.new { |o| {:controller => 'articles', :action => 'show', :id => nil, :article_id => o.id} }
 
-  has_many :comments, :as => :commented, :dependent => :delete_all, :order => "created_on"
+  has_many :comments, -> { order(:created_on) }, :as => :commented, :dependent => :delete_all
 
   # This overrides the instance method in acts_as_attachable
   def attachments_visible?(user=User.current)

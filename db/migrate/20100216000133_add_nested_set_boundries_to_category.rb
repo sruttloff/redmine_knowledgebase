@@ -1,4 +1,4 @@
-class AddNestedSetBoundriesToCategory < ActiveRecord::Migration
+class AddNestedSetBoundriesToCategory < ActiveRecord::Migration[4.2]
   def self.up
     add_column :kb_categories, :lft, :int
     add_column :kb_categories, :rgt, :int

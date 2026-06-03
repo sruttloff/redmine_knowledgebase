@@ -1,4 +1,4 @@
-class CreateArticles < ActiveRecord::Migration
+class CreateArticles < ActiveRecord::Migration[4.2]
   def self.up
     create_table :kb_articles do |t|
       t.column :category_id, :int, :null => false

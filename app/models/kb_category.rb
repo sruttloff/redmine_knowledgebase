@@ -1,5 +1,4 @@
-class KbCategory < ActiveRecord::Base
-  unloadable
+class KbCategory < ApplicationRecord
   
   self.table_name = "kb_categories"
   

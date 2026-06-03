@@ -1,4 +1,4 @@
-class AddProjectIdToArticles < ActiveRecord::Migration
+class AddProjectIdToArticles < ActiveRecord::Migration[4.2]
   def self.up
     add_column :kb_articles, :project_id, :int, :default => 0
   end

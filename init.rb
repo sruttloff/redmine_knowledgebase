@@ -1,10 +1,14 @@
+# The plugin's lib/ files don't follow Zeitwerk naming conventions.
+# They are explicitly required below. Ignore them from autoloading.
+Rails.autoloaders.main.ignore(File.join(__dir__, 'lib'))
+
 require 'redmine'
-require 'acts_as_viewed'
-require 'acts_as_rated'
+require_relative 'lib/acts_as_viewed'
+require_relative 'lib/acts_as_rated'
 require 'redmine_acts_as_taggable_on/initialize'
 
 #Register KB macro
-require 'macros'
+require_relative 'lib/macros'
 
 Redmine::Plugin.register :redmine_knowledgebase do
   name        'Knowledgebase'
