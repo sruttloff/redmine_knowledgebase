@@ -2,7 +2,7 @@ class CategoriesController < KnowledgebaseController
 
   def show
     @category = KbCategory.find(params[:id])
-    @articles = @category.articles.find(:all)
+    @articles = @category.articles.to_a
   end
 
   def new
@@ -39,7 +39,7 @@ class CategoriesController < KnowledgebaseController
       flash[:notice] = l(:label_category_deleted)
       redirect_to({ :controller => :knowledgebase, :action => 'index' })
     else
-      @articles = @category.articles.find(:all)
+      @articles = @category.articles.to_a
       flash[:error] = l(:label_category_not_empty_cannot_delete)
       render(:action => 'show')
     end

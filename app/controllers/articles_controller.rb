@@ -36,7 +36,7 @@ class ArticlesController < KnowledgebaseController
   
   def show
     @article.view request.remote_addr, User.current
-    @attachments = @article.attachments.find(:all, :order => "created_on DESC")
+    @attachments = @article.attachments.order(created_on: :desc)
     @comments = @article.comments
   end
   
