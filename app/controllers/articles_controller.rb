@@ -21,8 +21,8 @@ class ArticlesController < KnowledgebaseController
     end
   end
   
-  def create    
-    @article = KbArticle.new(params[:article])
+  def create
+    @article = KbArticle.new(article_params)
     @article.category_id = params[:category_id]
     @article.author_id = User.current.id
     if @article.save
@@ -45,8 +45,8 @@ class ArticlesController < KnowledgebaseController
   
   def update
     @article.updater_id = User.current.id
-	params[:article][:category_id] = params[:category_id]
-    if @article.update_attributes(params[:article])
+    @article.category_id = params[:category_id]
+    if @article.update(article_params)
       attachments = attach(@article, params[:attachments])
       flash[:notice] = l(:label_article_updated)
       redirect_to({ :action => 'show', :id => @article.id })
@@ -56,7 +56,7 @@ class ArticlesController < KnowledgebaseController
   end
   
   def add_comment
-    @comment = Comment.new(params[:comment])
+    @comment = Comment.new(comment_params)
     @comment.author = User.current || nil
     if @article.comments << @comment
       flash[:notice] = l(:label_comment_added)
@@ -116,6 +116,14 @@ private
     else
       attach_files(target, attachments)
     end
+  end
+
+  def article_params
+    params.require(:article).permit(:title, :summary, :content, :tag_list)
+  end
+
+  def comment_params
+    params.require(:comment).permit(:comments)
   end
 
   def get_article

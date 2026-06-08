@@ -11,7 +11,7 @@ class CategoriesController < KnowledgebaseController
   end
 
   def create
-    @category = KbCategory.new(params[:category])
+    @category = KbCategory.new(category_params)
     if @category.save
       # Test if the new category is a root category, and if more categories exist.
       # We check for a value > 1 because if this is the first entry, the category
@@ -54,12 +54,18 @@ class CategoriesController < KnowledgebaseController
       @category.move_to_child_of(KbCategory.find(params[:parent_id]))
     end
 
-    if @category.update_attributes(params[:category])
+    if @category.update(category_params)
       flash[:notice] = l(:label_category_updated)
       redirect_to({ :action => 'show', :id => @category.id })
     else
       render :action => 'edit'
     end
+  end
+
+  private
+
+  def category_params
+    params.require(:category).permit(:title, :description)
   end
 
 end

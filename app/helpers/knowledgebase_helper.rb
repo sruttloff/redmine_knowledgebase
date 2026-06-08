@@ -53,13 +53,20 @@ module KnowledgebaseHelper
   def create_preview_link
     v = Redmine::VERSION.to_a
     if v[0] == 2 && v[1] <= 1
-      link_to_remote l(:label_preview), 
-                     { :url => { :controller => 'articles', :action => 'preview' }, 
-                       :method => 'post', 
-                       :update => 'preview', 
+      link_to_remote l(:label_preview),
+                     { :url => { :controller => 'articles', :action => 'preview' },
+                       :method => 'post',
+                       :update => 'preview',
                        :with => "Form.serialize('articles-form')" }
     else
       preview_link({ :controller => 'articles', :action => 'preview' }, 'articles-form')
     end
+  end
+
+  def preview_link(url, form_id)
+    url = url_for(url)
+    link_to l(:label_preview), '#',
+            :class => 'icon icon-preview',
+            :onclick => "event.preventDefault(); var form = document.getElementById('#{escape_javascript(form_id)}'); var fd = new FormData(form); fetch('#{escape_javascript(url)}', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content } }).then(function(r){ return r.text(); }).then(function(html){ document.getElementById('preview').innerHTML = html; });"
   end
 end
