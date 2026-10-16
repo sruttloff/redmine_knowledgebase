@@ -1,56 +1,75 @@
 class KbArticle < ApplicationRecord
+  self.table_name = 'kb_articles'
 
-  self.table_name = "kb_articles"
+  belongs_to :project, optional: true
+  belongs_to :category, class_name: 'KbCategory', inverse_of: :articles
+  belongs_to :author, class_name: 'User'
+  belongs_to :updater, class_name: 'User', optional: true
+  validates :title, presence: true, length: {maximum: 255}
 
-  validates_presence_of :title
-  validates_presence_of :category_id
-
-  belongs_to :project # XXX association added to allow searching to work
-  belongs_to :category, :class_name => "KbCategory"
-  belongs_to :author,   :class_name => 'User', :foreign_key => 'author_id'
-  belongs_to :updater,  :class_name => 'User', :foreign_key => 'updater_id'
-
-  acts_as_viewed
-  acts_as_rated :no_rater => true
   acts_as_taggable
   acts_as_attachable
+  has_many :viewings, as: :viewed, class_name: 'KbViewing', dependent: :delete_all
+  has_many :ratings, as: :rated, class_name: 'KbRating', dependent: :delete_all
+  has_many :comments, -> { order(:created_on) }, as: :commented, dependent: :destroy
 
-  scope :visible, lambda { |*args|
-    user = args.first || User.current
-    if Setting['plugin_redmine_knowledgebase']['knowledgebase_anonymous_access'].to_i == 1 ||
-       user.allowed_to?(:view_articles, nil, :global => true)
-      where(nil)
-    else
-      none
-    end
-  }
+  scope :visible, ->(user = User.current) { readable_by?(user) ? all : none }
 
-  acts_as_searchable :columns => [ "kb_articles.title", "kb_articles.content"],
-                     :date_column => "kb_articles.created_at"
-
-  acts_as_event :title => Proc.new { |o| "#{l(:label_title_articles)} ##{o.id}: #{o.title}" },
-                :description => Proc.new { |o| "#{o.content}" },
-                :datetime => :created_at,
-                :type => 'articles',
-                :url => Proc.new { |o| {:controller => 'articles', :action => 'show', :id => nil, :article_id => o.id} }
-
-  has_many :comments, -> { order(:created_on) }, :as => :commented, :dependent => :delete_all
-
-  # This overrides the instance method in acts_as_attachable
-  def attachments_visible?(user=User.current)
-    true
+  def self.readable_by?(user = User.current)
+    Setting.plugin_redmine_knowledgebase['knowledgebase_anonymous_access'].to_i == 1 ||
+      user.allowed_to?({controller: 'articles', action: 'show'}, nil, global: true)
   end
 
-  def attachments_deletable?(user=User.current)
-    user.logged?
+  acts_as_searchable columns: ['kb_articles.title', 'kb_articles.content'], date_column: 'kb_articles.created_at'
+  acts_as_event title: ->(article) { "#{::I18n.t(:label_title_articles)} ##{article.id}: #{article.title}" },
+                description: :content, datetime: :created_at, type: 'articles',
+                url: ->(article) { {controller: 'articles', action: 'show', id: article.id} }
+
+  def visible?(user = User.current)
+    self.class.readable_by?(user)
   end
 
-  # XXX this is required by acts_as_attachable. Without this, trying to download
-  # a file throws the following:
-  # "NoMethodError (undefined method 'project' for #(ActiveRecord::Associations::BelongsToPolymorphicAssociation))"
+  def attachments_visible?(user = User.current)
+    visible?(user)
+  end
+
+  def attachments_editable?(user = User.current)
+    visible?(user) && user.logged? &&
+      user.allowed_to?({controller: 'articles', action: 'update'}, nil, global: true)
+  end
+  alias_method :attachments_deletable?, :attachments_editable?
+
+  # Knowledgebase articles are global, including their attachments and comments.
   def project
     nil
   end
 
-end
+  def view(ip, viewer = nil)
+    viewer = nil unless viewer&.logged?
+    with_lock do
+      existing = viewings.where(ip: ip)
+      existing = existing.or(viewings.where(viewer_id: viewer.id)) if viewer
+      viewings.create!(ip: ip, viewer: viewer) unless existing.exists?
+    end
+  end
 
+  def view_count
+    viewings.size
+  end
+
+  def rate(value)
+    ratings.create!(rating: value)
+  end
+
+  def rated_count
+    ratings.size
+  end
+
+  def rating_average
+    if ratings.loaded?
+      ratings.empty? ? 0 : (ratings.sum(&:rating) / ratings.size).round(2)
+    else
+      ratings.average(:rating)&.round(2) || 0
+    end
+  end
+end

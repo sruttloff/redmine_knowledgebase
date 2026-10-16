@@ -1,56 +1,28 @@
 class KnowledgebaseController < ApplicationController
-  
-  #Authorize against global permissions defined in init.rb
-  before_action :authorize_global, :except => [:index, :show]
-  before_action :authorize_global, :only   => [:index, :show], :unless => :allow_anonymous_access?
-  
-  rescue_from ActionView::MissingTemplate, :with => :force_404
-  rescue_from ActiveRecord::RecordNotFound, :with => :force_404
-  
-  def index
-    begin
-      summary_limit = Setting['plugin_redmine_knowledgebase']['knowledgebase_summary_limit'].to_i
-    rescue
-      summary_limit = 5
-    end
-    
-    @categories = KbCategory.all
-    @articles_newest   = KbArticle.order('created_at DESC').limit(summary_limit)
-    @articles_updated  = KbArticle.where('created_at <> updated_at').order('updated_at DESC').limit(summary_limit)
-
-    #FIXME the following method still requires ALL records to be loaded before being filtered.
-
-    a = KbArticle.includes(:viewings).sort_by(&:view_count)
-    a = a.drop(a.count - summary_limit) if a.count > summary_limit
-    @articles_popular  = a.reverse
-    a = KbArticle.includes(:ratings).sort_by(&:rated_count)
-    a = a.drop(a.count - summary_limit) if a.count > summary_limit
-    @articles_toprated = a.reverse
-
-    @tags = KbArticle.tag_counts
-  end
-
-#########
-protected
-#########
-
-  def is_user_logged_in
-    if !User.current.logged?
-      render_403
-    end
-  end
-  
-  def allow_anonymous_access?
-    Setting['plugin_redmine_knowledgebase']['knowledgebase_anonymous_access'].to_i == 1
-  end
-
-#######
-private
-#######
-
-  def force_404
+  before_action :authorize_knowledgebase
+  rescue_from ActiveRecord::RecordNotFound do
     render_404
   end
 
-end
+  def index
+    summary_limit = Setting.plugin_redmine_knowledgebase['knowledgebase_summary_limit'].to_i.clamp(1, 100)
+    @categories = KbCategory.all
+    @articles_newest = KbArticle.includes(:category).order(created_at: :desc).limit(summary_limit)
+    @articles_updated = KbArticle.includes(:category).where('created_at <> updated_at').order(updated_at: :desc).limit(summary_limit)
+    @articles_popular = KbArticle.includes(:viewings).sort_by { |article| [-article.view_count, article.id] }.first(summary_limit)
+    @articles_toprated = KbArticle.includes(:ratings).sort_by { |article| [-article.rating_average, -article.rated_count, article.id] }.first(summary_limit)
+    @tags = KbArticle.tag_counts_on(:tags)
+  end
 
+  private
+
+  def authorize_knowledgebase
+    if %w[index show tagged].include?(action_name)
+      authorize_global unless Setting.plugin_redmine_knowledgebase['knowledgebase_anonymous_access'].to_i == 1
+    elsif User.current.logged?
+      authorize_global
+    else
+      deny_access
+    end
+  end
+end

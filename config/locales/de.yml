@@ -1,20 +1,21 @@
---- 
-de: 
+---
+de:
   allow_anon_access: "Anonymen Zugriff erlauben?"
-  allow_sort_category_tree: "Den Katgegoriebaum alphabetisch sortieren?"
-  field_tag_list: "Tag Liste"
-  knowledgebase_title: Wissensbasis
+  allow_sort_category_tree: "Den Kategoriebaum alphabetisch sortieren?"
+  field_tag_list: "Schlagwortliste"
+  knowledgebase_title: Wissensdatenbank
+  label_kb_article_plural: Artikel der Wissensdatenbank
   label_article_created: "Artikel '%{title}' erstellt"
   label_article_plural: Artikel
   label_article_removed: "Artikel entfernt"
   label_article_updated: "Artikel aktualisiert"
-  label_article_viewed: 
-    one: "Einmal gesehen"
-    other: "%{count} Views"
+  label_article_viewed:
+    one: "Einmal aufgerufen"
+    other: "%{count} Aufrufe"
   label_category: Kategorie
   label_category_created: "Kategorie '%{title}' erstellt"
   label_category_deleted: "Kategorie gelöscht"
-  label_category_not_empty_cannot_delete: "Dieser Kategorie sind noch Artikel zugewiesen und kann nicht gelöscht werden,"
+  label_category_not_empty_cannot_delete: "Diese Kategorie oder eine Unterkategorie enthält noch Artikel und kann nicht gelöscht werden."
   label_category_plural: Kategorien
   label_category_updated: "Kategorie aktualisiert"
   label_content: Inhalt
@@ -30,27 +31,27 @@ de:
   label_new_category: "Kategorie erstellen"
   label_new_comment: "Neuer Kommentar"
   label_parent_category: "Übergeordnete Kategorie"
-  label_root_category: "Root Kategorie"
+  label_root_category: "Hauptkategorie"
   label_subcategories: Unterkategorien
   label_summary: Zusammenfassung
   label_summary_newest_articles: "Erstellt vor %{ago} in %{category}"
-  label_summary_popular_articles: 
+  label_summary_popular_articles:
     one: "Einmal angezeigt seit %{created}"
-    other: "%{count} Views seit %{created}"
-  label_summary_toprated_articles: 
-    one: "Rating: %{rating_avg}/%{rating_max} aus einer Stimme"
-    other: "Rating: %{rating_avg}/%{rating_max} aus %{count} Stimmen"
+    other: "%{count} Aufrufe seit %{created}"
+  label_summary_toprated_articles:
+    one: "Bewertung: %{rating_avg}/%{rating_max} aus einer Stimme"
+    other: "Bewertung: %{rating_avg}/%{rating_max} aus %{count} Stimmen"
   label_summary_updated_articles: "Vor %{ago} aktualisiert"
   label_title: Titel
   label_title_articles: Artikel
   label_title_category: Kategorie
-  label_updated_who: "Updated by %{updater} %{age} ago"
+  label_updated_who: "Aktualisiert von %{updater} vor %{age}"
   message_no_articles: "Es wurde noch kein Artikel eingegeben. Beginnen Sie mit einem Artikel zum Thema..."
-  message_no_categories: "Unfortunately, there aren't any Categories defined, and you need to be logged in to create new categories."
-  show_category_totals: "Anzahl der Artikel pro Katgeorie im Katgeoriebaum anzeigen?"
+  message_no_categories: "Es gibt noch keine Kategorien. Melden Sie sich an, um eine Kategorie anzulegen."
+  show_category_totals: "Anzahl der Artikel pro Kategorie im Kategoriebaum anzeigen?"
   summary_item_limit: "Maximale Artikel in der Übersicht"
   title_add_comment: "Kommentar hinzufügen"
-  title_article_rating: "Artikel Rating"
+  title_article_rating: "Artikelbewertung"
   title_browse_by_category: "Nach Kategorie"
   title_create_article: "Artikel erstellen"
   title_create_category: "Kategorie erzeugen"
@@ -60,7 +61,21 @@ de:
   title_new_category: "Neue Kategorie"
   title_newest_articles: "Neueste Artikel"
   title_recently_updated_articles: "Artikel zuletzt aktualisiert"
-  title_tagged_articles: "Artikel getaggt mit %{tag}"
+  title_tagged_articles: "Artikel mit dem Schlagwort %{tag}"
   title_tags: Tags
   title_top_rated_articles: "Bestbewertete Artikel"
-  title_votes: Votes
+  title_votes:
+    zero: keine Stimmen
+    one: eine Stimme
+    other: '%{count} Stimmen'
+
+  project_module_knowledgebase: Wissensdatenbank
+  permission_view_articles: Artikel der Wissensdatenbank ansehen
+  permission_comment_and_rate_articles: Artikel kommentieren und bewerten
+  permission_create_articles: Artikel erstellen
+  permission_edit_articles: Artikel und Anhänge bearbeiten
+  permission_manage_articles: Artikel verwalten
+  permission_manage_articles_comments: Artikelkommentare löschen
+  permission_create_article_categories: Artikelkategorien erstellen
+  permission_manage_article_categories: Artikelkategorien verwalten
+  label_preview_error: "Die Vorschau konnte nicht geladen werden. Bitte erneut versuchen."

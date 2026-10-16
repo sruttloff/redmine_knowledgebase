@@ -1,6 +1,16 @@
 #article-summaries th { font-family: Tahoma; padding: 6px 0px; color: #669933; font-size: 15px; font-weight: bold; border-bottom: solid 1px #CCCCCC; text-align: left;  }
 #article { padding: 10px 5px 20px 5px }
 
+.knowledgebase-contextual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 100%;
+}
+.knowledgebase-contextual select { max-width: 100%; }
+
 h3.cattitle {
 	border-bottom: 1px solid #ddd;
 }
@@ -99,3 +109,15 @@ div.star-rating-readonly a{cursor:default !important}
 /* Partial Star CSS */
 div.star-rating{background:transparent!important;overflow:hidden!important}
 /* END jQuery.Rating Plugin CSS */
+
+.category-articles::after,
+.recently-updated::after { content: ''; display: block; clear: both; }
+
+@media (max-width: 600px) {
+  .knowledgebase-contextual { float: none; justify-content: flex-start; }
+  .knowledgebase-contextual select { flex-basis: 100%; width: 100%; }
+  .category-articles .article-icon,
+  .recently-updated .article-icon { width: auto; float: none; }
+  .categories .list { width: 100%; table-layout: fixed; }
+  .categories td.name { white-space: normal; overflow-wrap: anywhere; }
+}

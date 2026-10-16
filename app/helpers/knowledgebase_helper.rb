@@ -1,72 +1,47 @@
 module KnowledgebaseHelper
+  include ActsAsTaggableOn::TagsHelper
 
-  # Display a link if the user has a global permission
-  def link_to_if_authorized_globally(name, options = {}, html_options = nil, *parameters_for_method_reference)
-    if authorized_globally(options[:controller],options[:action])
-      link_to(name, options, html_options, *parameters_for_method_reference)
-    end
+  def link_to_if_authorized_globally(name, options = {}, html_options = nil)
+    link_to(name, options, html_options) if authorized_globally(options[:controller], options[:action])
   end
 
-  def authorized_globally(controller,action)
-    User.current.allowed_to?({:controller => controller, :action => action}, nil, :global => true)
+  def authorized_globally(controller, action)
+    User.current.logged? && User.current.allowed_to?({controller: controller, action: action}, nil, global: true)
   end
- 
+
   def format_article_summary(article, format, options = {})
-    output = nil
-    case format
-    when "normal"
-      output = truncate article.summary, :length => options[:truncate]
-    when "newest"
-      output = l(:label_summary_newest_articles,
-        :ago => time_ago_in_words(article.created_at),
-        :category => link_to(article.category.title, {:controller => 'categories', :action => 'show', :id => article.category_id}))
-    when "updated"
-      output = l(:label_summary_updated_articles,
-        :ago =>time_ago_in_words(article.updated_at),
-        :category => link_to(article.category.title, {:controller => 'categories', :action => 'show', :id => article.category_id}))
-    when "popular"
-      output = l(:label_summary_popular_articles,
-        :count => article.view_count,
-        :created => article.created_at.to_formatted_s(:rfc822))
-    when "toprated"
-      output = l(:label_summary_toprated_articles,
-        :rating_avg => article.rating_average.to_s,
-        :rating_max => "5",
-        :count => article.rated_count)
+    output = case format
+    when 'newest', 'updated'
+      category = link_to(article.category.title, category_path(article.category_id))
+      time = format == 'newest' ? article.created_at : article.updated_at
+      # Escape both the translation and its user-controlled substitutions.
+      template = ERB::Util.html_escape(l("label_summary_#{format}_articles".to_sym, ago: time_ago_in_words(time), category: '%CATEGORY%'))
+      template.gsub('%CATEGORY%', category).html_safe
+    when 'popular'
+      l(:label_summary_popular_articles, count: article.view_count, created: format_time(article.created_at))
+    when 'toprated'
+      l(:label_summary_toprated_articles, rating_avg: article.rating_average, rating_max: 5, count: article.rated_count)
+    else
+      truncate(article.summary.to_s, length: options[:truncate] || 100)
     end
-    
-    content_tag(:div, raw(output), :class => "summary")
+    content_tag(:div, output, class: 'summary')
   end
 
   def sort_categories?
-    Setting['plugin_redmine_knowledgebase']['knowledgebase_sort_category_tree'].to_i == 1
+    Setting.plugin_redmine_knowledgebase['knowledgebase_sort_category_tree'].to_i == 1
   end
-  
+
   def show_category_totals?
-    Setting['plugin_redmine_knowledgebase']['knowledgebase_show_category_totals'].to_i == 1
+    Setting.plugin_redmine_knowledgebase['knowledgebase_show_category_totals'].to_i == 1
   end
-  
+
   def updated_by(updated, updater)
-     l(:label_updated_who, :updater => link_to_user(updater), :age => time_tag(updated)).html_safe
+    template = ERB::Util.html_escape(l(:label_updated_who, updater: '%USER%', age: '%AGE%'))
+    template.gsub('%USER%', link_to_user(updater)).gsub('%AGE%', time_tag(updated)).html_safe
   end
 
   def create_preview_link
-    v = Redmine::VERSION.to_a
-    if v[0] == 2 && v[1] <= 1
-      link_to_remote l(:label_preview),
-                     { :url => { :controller => 'articles', :action => 'preview' },
-                       :method => 'post',
-                       :update => 'preview',
-                       :with => "Form.serialize('articles-form')" }
-    else
-      preview_link({ :controller => 'articles', :action => 'preview' }, 'articles-form')
-    end
-  end
-
-  def preview_link(url, form_id)
-    url = url_for(url)
-    link_to l(:label_preview), '#',
-            :class => 'icon icon-preview',
-            :onclick => "event.preventDefault(); var form = document.getElementById('#{escape_javascript(form_id)}'); var fd = new FormData(form); fetch('#{escape_javascript(url)}', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content } }).then(function(r){ return r.text(); }).then(function(html){ document.getElementById('preview').innerHTML = html; });"
+    link_to l(:label_preview), '#', class: 'icon icon-preview',
+      onclick: "event.preventDefault(); const form = document.getElementById('articles-form'); const data = new FormData(form); data.delete('_method'); data.delete('authenticity_token'); fetch('#{escape_javascript(preview_articles_path)}', {method: 'POST', body: data, headers: {'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content}}).then(r => {if (!r.ok) throw new Error(r.status); return r.text();}).then(html => {document.getElementById('preview').innerHTML = html;}).catch(() => {document.getElementById('preview').textContent = '#{escape_javascript(l(:label_preview_error))}';});"
   end
 end

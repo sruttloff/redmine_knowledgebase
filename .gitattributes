@@ -1,0 +1,9 @@
+# Keep files portable between Windows checkouts and Linux Redmine deployments.
+* text=auto
+*.rb text eol=lf
+*.erb text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+Gemfile text eol=lf
+*.css text eol=lf
+*.js text eol=lf

@@ -1,23 +1,8 @@
-<div class="rating-title"><%= l(:title_article_rating) %> <span>(<%= l(:title_votes, :count => @article.rated_count) %>)</span></div>
-<div id='article-ratings'>
-  <% avg = @article.rating_average.to_i %>
-  <% (1..5).each do |star| %>
-    <input name='rating' type='radio' class='rate' value='<%= star %>' <%= "checked='checked'" if star <= avg %> />
+<div class="rating-title"><%= l(:title_article_rating) %> (<%= @article.rating_average %>/5; <%= l(:title_votes, count: @article.rated_count) %>)</div>
+<% if User.current.logged? && authorized_globally('articles', 'rate') %>
+  <%= form_tag rate_article_path(@article), id: 'article-ratings' do %>
+    <label for="rating"><%= l(:title_article_rating) %></label>
+    <%= select_tag :rating, options_for_select((1..5).map { |n| ["#{n} ★", n] }, 5) %>
+    <%= submit_tag l(:button_submit) %>
   <% end %>
-</div>
-<script type='text/javascript' language='javascript'>
-$(function(){ 
-  $('#article-ratings :radio.rate').rating({
-    required: true,
-    callback: function(value, link) {
-      $.ajax({
-        type: "POST",
-        url: "<%= rate_article_url(@article) %>",
-        data: {
-          rating: value
-        }
-      });
-    }
-  });
-});
-</script>
+<% end %>

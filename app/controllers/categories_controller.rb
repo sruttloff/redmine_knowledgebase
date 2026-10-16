@@ -1,8 +1,12 @@
 class CategoriesController < KnowledgebaseController
+  before_action :get_category, only: [:show, :edit, :update, :destroy]
+
+  def index
+    redirect_to knowledgebase_path
+  end
 
   def show
-    @category = KbCategory.find(params[:id])
-    @articles = @category.articles.to_a
+    @articles = @category.articles.includes(:category).to_a
   end
 
   def new
@@ -12,61 +16,60 @@ class CategoriesController < KnowledgebaseController
 
   def create
     @category = KbCategory.new(category_params)
+    @parent_id = params[:parent_id]
+    assign_parent
     if @category.save
-      # Test if the new category is a root category, and if more categories exist.
-      # We check for a value > 1 because if this is the first entry, the category
-      # count would be 1 (since the create operation already succeeded)
-      if !params[:root_category] and KbCategory.count > 1
-        @category.move_to_child_of(KbCategory.find(params[:parent_id]))
-      end
-
-      flash[:notice] = l(:label_category_created, :title => @category.title)
-      redirect_to({ :action => 'show', :id => @category.id })
+      flash[:notice] = l(:label_category_created, title: @category.title)
+      redirect_to category_path(@category)
     else
-      render(:action => 'new')
+      render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @category = KbCategory.find(params[:id])
     @parent_id = @category.parent_id
   end
 
-  def destroy
-    @category = KbCategory.find(params[:id])
-    if @category.articles.size == 0
-      @category.destroy
-      flash[:notice] = l(:label_category_deleted)
-      redirect_to({ :controller => :knowledgebase, :action => 'index' })
+  def update
+    @category.assign_attributes(category_params)
+    @parent_id = params[:parent_id]
+    assign_parent
+    if @category.save
+      flash[:notice] = l(:label_category_updated)
+      redirect_to category_path(@category)
     else
-      @articles = @category.articles.to_a
-      flash[:error] = l(:label_category_not_empty_cannot_delete)
-      render(:action => 'show')
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  def update
-    @category = KbCategory.find(params[:id])
-    
-    if params[:root_category] == "yes"
-      @category.parent_id = nil
+  def destroy
+    # Never remove a subtree that still contains articles.
+    if KbArticle.where(category_id: @category.self_and_descendants.select(:id)).exists?
+      @articles = @category.articles.to_a
+      flash.now[:error] = l(:label_category_not_empty_cannot_delete)
+      render :show, status: :unprocessable_entity
     else
-      @category.move_to_child_of(KbCategory.find(params[:parent_id]))
-    end
-
-    if @category.update(category_params)
-      flash[:notice] = l(:label_category_updated)
-      redirect_to({ :action => 'show', :id => @category.id })
-    else
-      render :action => 'edit'
+      @category.destroy!
+      flash[:notice] = l(:label_category_deleted)
+      redirect_to knowledgebase_path
     end
   end
 
   private
 
+  def get_category
+    @category = KbCategory.find(params[:id])
+  end
+
+  def assign_parent
+    if params[:root_category] == 'yes' || KbCategory.count.zero?
+      @category.parent = nil
+    else
+      @category.parent = KbCategory.find(params[:parent_id])
+    end
+  end
+
   def category_params
     params.require(:category).permit(:title, :description)
   end
-
 end
-

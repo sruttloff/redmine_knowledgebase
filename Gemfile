@@ -1,6 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'redmine_acts_as_taggable_on', git: "https://github.com/arkhitech/redmine_acts_as_taggable_on.git"
-gem 'awesome_nested_set'
-
-gem 'ya2yaml'
+gem 'acts-as-taggable-on'
+gem 'awesome_nested_set', '~> 3.9'

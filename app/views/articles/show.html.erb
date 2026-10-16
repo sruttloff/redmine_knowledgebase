@@ -1,20 +1,19 @@
 <% content_for :header_tags do %>
   <%= stylesheet_link_tag 'knowledgebase', :plugin => 'redmine_knowledgebase' %>
-  <%= stylesheet_link_tag 'scm' %>  
-  <%= javascript_include_tag 'jquery.form.js', 'jquery.MetaData.js', 'jquery.rating.pack.js', :plugin => 'redmine_knowledgebase' %>
+  <%= stylesheet_link_tag 'scm' %>
 <% end %>
 
 <% content_for :sidebar do %>
 	<ul id="options">
 		<li><%= link_to_if_authorized_globally l(:label_edit_article), { :controller => 'articles', :action => 'edit', :id => @article.id }, :class => 'icon icon-edit' %></li>
-		<li><%= link_to_if_authorized_globally l(:label_delete_article), { :controller => 'articles', :action => 'destroy', :id => @article.id }, :confirm => l(:text_are_you_sure), :method => :delete, :class => 'icon icon-del' %></li>
-		<li><%= link_to_if_authorized_globally l(:label_new_comment), { :controller => "articles", :action => "comment", :article_id => @article.id }, :class => "icon icon-comment", :remote => true, :method => :get %></li>
+		<li><%= link_to_if_authorized_globally l(:label_delete_article), { :controller => 'articles', :action => 'destroy', :id => @article.id }, :data => { :confirm => l(:text_are_you_sure) }, :method => :delete, :class => 'icon icon-del' %></li>
+		<li><%= link_to l(:label_new_comment), "#add-comment", :class => "icon icon-comment" if authorized_globally("articles", "add_comment") %></li>
 	</ul>
 	<br />
   <div id='rating-container'>
     <%= render :partial => "rating" %>
   </div>
-	<% unless @article.tag_list.empty? %> 
+	<% unless @article.tag_list.empty? %>
 	<br /><br /><br />
 	<div class="rating-title"><%= l(:title_tags) %></div>
 	<ul id="taglist">
@@ -28,15 +27,16 @@
 <p id="category-crumbs" class="breadcrumb">
 	<%= link_to l(:label_kb_home), { :controller => 'knowledgebase', :action => 'index' } %>
 	<% @article.category.ancestors.each do |ancestor| %>
-	&nbsp;&raquo;&nbsp; 
+	&nbsp;&raquo;&nbsp;
 	<%= link_to ancestor.title, { :controller => 'categories', :action => 'show', :id => ancestor.id } %>
 	<% end %>
-	&nbsp;&raquo;&nbsp; 
+	&nbsp;&raquo;&nbsp;
 	<%= link_to @article.category.title, { :controller => 'categories', :action => 'show', :id => @article.category.id } %>
 </p>
 <% html_title @article.title %>
 
 <h1><%= @article.title %></h1>
+<%= error_messages_for 'article' %>
 
 <div class="infobox">
 <%= authoring @article.created_at, @article.author %>
@@ -57,7 +57,7 @@
 
 <% unless @article.attachments.empty? %>
 <div id="section-title" class="attachments infobox"><%= l(:label_attachment_plural) %></div>
-<%= render :partial => 'attachments/links', :locals => {:attachments => @article.attachments, :options => { :deletable => User.current.logged? } } %>
+<%= render :partial => 'attachments/links', :locals => {:container => @article, :attachments => @article.attachments, :options => { :deletable => @article.attachments_deletable?, :editable => @article.attachments_editable? } } %>
 <br />
 <% end %>
 
@@ -67,13 +67,26 @@
 <% @comments.each do |comment| %>
   <h4>
     <%= avatar(comment.author, :size => "24") %>
-    &nbsp;<%= authoring comment.created_on, comment.author %>&nbsp; 
-    <%= link_to_if_authorized_globally image_tag('delete.png'), 
+    &nbsp;<%= authoring comment.created_on, comment.author %>&nbsp;
+    <%= link_to_if_authorized_globally l(:button_delete),
          { :controller => 'articles', :action => 'destroy_comment', :id => @article.id, :comment_id => comment.id },
-         :confirm => l(:text_are_you_sure), 
+         :data => { :confirm => l(:text_are_you_sure) },
          :method => :post, :title => l(:button_delete) %>
   </h4>
   <%= textilizable(comment.comments) %>
 <% end %>
 </div>
+<% end %>
+
+<% if User.current.logged? && authorized_globally('articles', 'add_comment') %>
+  <div id="add-comment">
+    <h3><%= l(:title_add_comment) %></h3>
+    <%= error_messages_for 'comment' %>
+    <%= form_tag add_comment_article_path(@article) do %>
+      <%= label_tag 'comment_comments', l(:label_comment) %>
+      <%= text_area_tag 'comment[comments]', @comment&.comments, id: 'comment_comments', rows: 5, class: 'wiki-edit' %>
+      <p><%= submit_tag l(:button_add) %></p>
+    <% end %>
+    <%= wikitoolbar_for 'comment_comments' %>
+  </div>
 <% end %>
